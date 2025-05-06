@@ -39,14 +39,7 @@ PLOT_EVERY    = 5     # if it is set to 10 generate smile plot every ~50 s whe
 MAX_MONEYNESS = 2.5    # only extend custom strikes to ±250 % of spot; beyond that vols explode and liquidity is zero
 
 
-#  Clean previous artefacts so every run starts with empty folders
-# --------------------------------------------------------------------------
-for _dir in (SNAP_CSV_DIR, OUTDIR):
-    for f in _dir.glob("*"):      
-        if f.is_file():
-            f.unlink()
-        else:
-            import shutil; shutil.rmtree(f)
+
 
 
 SNAP_CSV_DIR = Path("snapshot_csv")
@@ -239,6 +232,16 @@ def append_custom_strikes(
         df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
     return df
 
+
+# Deleting previous csv and plot files
+# -----------------------------------------------------------------------------
+
+for _dir in (SNAP_CSV_DIR, OUTDIR):
+    for f in _dir.glob("*"):      
+        if f.is_file():
+            f.unlink()
+        else:
+            import shutil; shutil.rmtree(f)
 # Main function
 # -----------------------------------------------------------------------------
 
