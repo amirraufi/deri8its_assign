@@ -5,7 +5,6 @@ import math
 import time
 from pathlib import Path
 from typing import Dict, Tuple, List
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,7 +18,13 @@ from data_ import (
     EXPIRY, DEPTH, T1_SEC, T2_SEC,
 )
 
-
+# to Run this script, you need to give the following arguments:
+# 1. expiry code e.g. 23MAY25
+# 2. total runtime seconds (T1)
+# 3. interval between snapshots (T2)
+# 4. additional strike prices to include (optional)
+# Example usage:
+# python calculating_own_mark_price.py 23MAY25 3600 5 10000 20000
 
 pd.options.display.float_format = "{:.4f}".format
 
@@ -28,7 +33,7 @@ pd.options.display.float_format = "{:.4f}".format
 SPREAD_IV_MAX = 1.5    # exclude quotes with ask‑IV – bid‑IV > 1.5 vols (~90th‑pctile weekday spread)
 SIZE_MIN      = 5      # require ≥ 5 contracts on both sides—covers 98 % of ATM/weeklies but still filters 1‑lot feelers
 POLY_DEGREE   = 2      # quadratic in ln(K/S): captures skew + basic smile with minimum over‑fit
-LIQ_K         = 50     # λ = depth / (depth + 50·spread) ⇒ 1‑tick/50‑lot book gets 50 % weight on micro‑price
+LIQ_K         = 10   # λ = depth / (depth + 50·spread) ⇒ 1‑tick/50‑lot book gets 50 % weight on micro‑price
 PLOT_EVERY    = 10     # generate smile plot every ~50 s when t2=5 s, keeps disk usage modest
 
 MAX_MONEYNESS = 2.5    # only extend custom strikes to ±250 % of spot; beyond that vols explode and liquidity is zero
@@ -48,10 +53,10 @@ OUTDIR.mkdir(exist_ok=True)
 def parse_instr(name: str) -> Tuple[str, float, str]:
     under, _date, strike, opt_type = name.split("-")
     return under, float(strike), opt_type.upper()
-
+#Black-Scholes formula 
 def black_price(S: float, K: float, T: float, sigma: float,
                 is_call: bool, r: float = 0.0) -> float:
-    """Black–Scholes (undiscounted) coin‑denominated option value."""
+
     if T <= 0 or sigma <= 0:
         return max(0.0, S - K) if is_call else max(0.0, K - S)
     d1 = (math.log(S / K) + 0.5 * sigma * sigma * T) / (sigma * math.sqrt(T))
@@ -59,7 +64,7 @@ def black_price(S: float, K: float, T: float, sigma: float,
     N = lambda x: 0.5 * (1 + math.erf(x / math.sqrt(2)))
     disc = math.exp(-r * T)
     return (S * N(d1) - K * disc * N(d2)) if is_call else (K * disc * N(-d2) - S * N(-d1))
-
+#Interpolating the implied volatility surface
 def fit_iv_surface(df_tick: pd.DataFrame) -> Tuple[Dict[str, float], Dict[str, np.ndarray]]:
     """Return per‑instrument IV map & per‑underlying smile‑coeff map."""
     iv_map: Dict[str, float] = {}
@@ -90,7 +95,7 @@ def fit_iv_surface(df_tick: pd.DataFrame) -> Tuple[Dict[str, float], Dict[str, n
         iv_all = poly(np.log(df_under.strike / S)).clip(0.05, 3.0)
         iv_map.update({ins: iv for ins, iv in zip(df_under.instrument, iv_all)})
     return iv_map, coeffs_map
-
+# Calculate micro price tilting towards thiner sides 
 def micro_price(rows: pd.DataFrame) -> float:
     bids = rows[rows.side == 'bids']
     asks = rows[rows.side == 'asks']
@@ -101,11 +106,27 @@ def micro_price(rows: pd.DataFrame) -> float:
     return (best_ask.price * best_bid.size + best_bid.price * best_ask.size) / (
         best_bid.size + best_ask.size
     )
+def plain_mid(rows: pd.DataFrame) -> float:
+    bids = rows[rows.side == "bids"]
+    asks = rows[rows.side == "asks"]
+    if bids.empty or asks.empty:
+        return np.nan
+    return 0.5 * (bids.price.max() + asks.price.min())
 
+def vwap_mid(rows: pd.DataFrame, depth_levels: int = 3) -> float:
+    bids = rows[rows.side == "bids"].nlargest(depth_levels, "price")
+    asks = rows[rows.side == "asks"].nsmallest(depth_levels, "price")
+    if bids.empty or asks.empty:
+        return np.nan
+    vwap_bid = (bids["price"] * bids["size"]).sum() / bids["size"].sum()
+    vwap_ask = (asks["price"] * asks["size"]).sum() / asks["size"].sum()
+    return (vwap_bid * asks["size"].sum() + vwap_ask * bids["size"].sum()) / (
+           bids["size"].sum() + asks["size"].sum())
 
+# Calculate liquidity weight
 def liquidity_weight(spread: float, depth: float) -> float:
     return depth / (depth + LIQ_K * spread) if spread > 0 else 1.0
-
+# Plotting the implied volatility smile with respect to Ln(K/S)
 def plot_smile(df_tick: pd.DataFrame, coeffs_map: Dict[str, np.ndarray], snap: int) -> None:
     for under, grp in df_tick.groupby('underlying'):
         coeffs = coeffs_map.get(under)
@@ -124,6 +145,7 @@ def plot_smile(df_tick: pd.DataFrame, coeffs_map: Dict[str, np.ndarray], snap: i
         ax.set_title(f"{under} smile – snapshot {snap}")
         ax.set_xlabel("ln(K/S)")
         ax.set_ylabel("implied vol")
+        ax.grid(True, linestyle=':')
         ax.legend()
         fname = OUTDIR / f"{under}_snap{snap:03d}.png"
         fig.savefig(fname, dpi=120, bbox_inches='tight')
@@ -138,10 +160,7 @@ def append_custom_strikes(
     custom_strikes: List[float],
 ) -> pd.DataFrame:
     """Add hypothetical quotes for requested strikes.
-
-    
-   
-    IV is capped by the highest observed ask IV for that underlying.
+     IV is capped by the highest observed ask IV for that underlying.
     Theoretical coin price is clipped to the interval [0,1].
     """
     if not custom_strikes:
@@ -230,8 +249,12 @@ async def main(args) -> None:
     snap = 0
     print(f"Running until {time.strftime('%H:%M:%S', time.localtime(end_time))}, "
           f"snapshots every {args.t2}s")
-
+    avg_plain_series = []
+    avg_micro_series = []
+    avg_vwap_series  = []       #
+    avg_our_series   = [] 
     while time.time() < end_time:
+        ...
         await asyncio.sleep(args.t2)
         snap += 1
 
@@ -252,7 +275,17 @@ async def main(args) -> None:
                 .apply(micro_price, include_groups=False)  
                 .rename('micro')
         )
-        tick = tick.join(mprice, on='instrument')
+        plain   = (book.groupby('instrument', group_keys=False)
+             .apply(plain_mid, include_groups=False)
+             .rename('plain_mid'))
+
+        vwap3   = (book.groupby('instrument', group_keys=False)
+                    .apply(vwap_mid, include_groups=False)
+                    .rename('vwap3'))
+
+        benchmarks = pd.concat([mprice, plain, vwap3], axis=1)   # index = instrument
+        tick = tick.join(benchmarks, on="instrument")
+               
 
 
         iv_map, coeffs_map = fit_iv_surface(tick)
@@ -263,7 +296,6 @@ async def main(args) -> None:
 
         
         expiry_ts = time.mktime(time.strptime(EXPIRY, "%d%b%y"))
-
         def blend_mark(r):
             micro = r.micro
             spread = r.best_ask - r.best_bid
@@ -292,9 +324,15 @@ async def main(args) -> None:
 
         # Snapshot CSV output
         # ------------------------------------------------------------------
-        df_out = (tick[['instrument', 'strike', 'my_mark_px', 'mark_px', 'is_custom']]
+        df_out = (tick[['instrument', 'strike',
+                        'plain_mid', 'micro', 'vwap3',
+                        'my_mark_px', 'mark_px', 'is_custom']]
                     .rename(columns={'my_mark_px': 'our_mark_px',
                                      'mark_px':   'deribit_mark_px'}))
+
+        # --- diff columns ----------------------------------------------------
+        for col in ['plain_mid', 'micro', 'vwap3', 'our_mark_px']:
+            df_out[f'diff_{col}'] = df_out[col] - df_out['deribit_mark_px']
 
         # numeric diff (NaN if Deribit price missing)
         df_out['diff'] = df_out['our_mark_px'] - df_out['deribit_mark_px']
@@ -305,8 +343,17 @@ async def main(args) -> None:
         # split by flag
         df_std  = df_out[~df_out['is_custom']].drop(columns='is_custom').round(4).copy()
         df_cust = df_out[df_out['is_custom'] ].drop(columns='is_custom').round(4).copy()
-        print(f"Snapshot {snap}: avg diff (normal) = {df_std['diff'].mean():.4f}")
+        avg_plain = df_std['diff_plain_mid'].mean()
+        avg_micro = df_std['diff_micro'].mean()
+        avg_vwap3 = df_std['diff_vwap3'].mean()
+        avg_our   = df_std['diff_our_mark_px'].mean()
 
+        avg_plain_series.append(avg_plain)
+        avg_micro_series.append(avg_micro)
+        avg_vwap_series.append(avg_vwap3)
+        avg_our_series.append(avg_our) 
+        print(f"Snapshot {snap}: "
+              f"plain={avg_plain:.5f} | micro={avg_micro:.5f} | vwap3={avg_vwap3:.5f}| our={avg_our:.5f}")         # store it
         csv_std  = SNAP_CSV_DIR / f"snapshot_{snap:03d}_normal.csv"
         csv_cust = SNAP_CSV_DIR / f"snapshot_{snap:03d}_custom.csv"
 
@@ -321,7 +368,16 @@ async def main(args) -> None:
         # plots every N snapshots
         if snap % PLOT_EVERY == 0:
             plot_smile(tick, coeffs_map, snap)
-
+        if avg_plain_series:
+            fig, axs = plt.subplots(2, 2, figsize=(10, 6))
+            for ax, data, title in zip(axs.ravel(),
+                    [avg_plain_series, avg_micro_series, avg_vwap_series, avg_our_series],
+                    ["plain mid", "micro", "vwap‑3", "our mark"]):
+                ax.plot(data, marker='o')
+                ax.set_title(title); ax.grid(True)
+                ax.set_xlabel("snapshot #"); ax.set_ylabel("diff")
+            fig.tight_layout()
+            fig.savefig("avg_diff_grid.png", dpi=120)
     await stream.ws.close()
     print("Finished. Smile plots in", OUTDIR)
     print("CSV snapshots in", SNAP_CSV_DIR)
