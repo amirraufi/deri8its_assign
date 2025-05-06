@@ -5,7 +5,7 @@
 I have generated a fair mark‑price for every option by taking the best of two worlds and letting the data tell us how much weight to give each one:
 
 Micro‑price (market signal)
-A size‑weighted mid‑price that leans toward the heavier side of the order book — the quickest read of where traders really want to deal.
+A size‑weighted mid‑price that leans toward the heavier side of the order book reduces noise and an indication of where traders really want to deal.
 Theoretical price (model signal)
 A no‑arbitrage Black‑Scholes value using an implied‑volatility surface we fit to the liquid quotes (tight spreads, decent size).
 The surface is quadratic in ln(K/S); simple, smooth and robust.
@@ -18,10 +18,10 @@ We blend them with a liquidity switch
   &lambda;<sub>liq</sub> = depth / (depth + L<sub>k</sub> &middot; spread)
 </p>
 
- depth = total number of contracts at the top of the book (bid_size + ask_size)
+ depth = total number of contracts (bid_size + ask_size)
 If the book is deep & tight → λ ≈ 1 → follow the market.
 If the quote is thin or wide (far OTM wings) → λ → 0 → fall back to theory.
-Because the IV surface is continuous, we can price any user‑requested strike on the fly and keep the sheet arbitrage‑free.
+Because the IV surface is continuous, we can price any user‑requested strike on the fly and keep the sheet arbitrage free.
 
 A live dashboard plots the tracking error of this blended mark against three norm models (plain mid, micro, VWAP‑3). Our mark is not always the closest to Deribit’s official mark. As in the instruction it has been noted that the methodology is more important. By sliding L_k you can instantly pivot from “pure market” to “pure model” without touching the rest of the code.
 
@@ -150,12 +150,14 @@ benchmarks + tick DF → fit_iv_surface() → iv_map, coeffs_map
 
 ### Key Challenges & Mitigations  
 
-* **Level‑2 Depth Availability** – Public API exposes only 10 levels; sufficient for micro/VWAP, but deeper stats (order book slope) were out of scope.  
-* **Wing Liquidity** – Far ITM/OTM options exhibit wide spreads ✔︎ addressed by λ‑blend gravitating toward theory.  
-* **No Deribit Mark Reliance** – The assignment forbids copying venue marks; we solved IV via the described model and only using bid and ask information and not the mark price or the IV that is based on the mark price.  
-  
+* **Level‑2 Depth Availability** – Public API exposes only 10 levels; sufficient for micro/VWAP, but deeper stats (order book slope) were out of scope and it was my first time working with websockets and going from level1 to level2 was also a bit challenging.
+* **Wing Liquidity** – Far ITM/OTM options exhibit wide spreads. Most of the mehodolgies would give a bit of a far price as the spread is big and liquidity is not enough. ✔︎ addressed by λ‑blend gravitating toward theory.  
+* **No Deribit Mark Reliance** – The assignment forbids copying venue marks; we solved IV via the described model and only using bid and ask information and not the mark price or the IV that is based on the mark price.
+### Methodology
+I searched through all the coins that Deribit offers and found those with options, then retrieved all the strikes for the given expiration. I then obtained their Level 1 and Level 2 data for ask size, bid size, best ask, best bid, etc. Next, I considered the best ways to calculate mid prices and identified three methods: plain mid, VWAP, and micro-price (which has been explained).
 
-The resulting blend keeps ATM strikes within a few bps of venue marks while providing **smooth, arbitrage‑free prices** for illiquid wings and custom strikes.
+First, I tried the basic approach by computing mark prices using each of the three methods (micro price, mid price, etc.). Then I calculated implied volatility using Brent’s method, interpolated the smile to find IV for all unlisted options, and used Black–Scholes to obtain their theoretical values. However, I noticed the wide spread between bid and ask in far out‑of‑the‑money options, so I created a λ function to weight theoretical and market values based on bid–ask spread. The resulting blend keeps ATM strikes within a few basis points of venue marks while providing smooth, arbitrage‑free prices for illiquid wings and custom strikes. Finally, I added the vol‑smile graph I generated and a chart comparing average differences between my model, VWAP, micro, and midpoint prices.
+
 
 
 ---
