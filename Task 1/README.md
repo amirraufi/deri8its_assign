@@ -72,7 +72,7 @@ benchmarks + tick DF → fit_iv_surface() → iv_map, coeffs_map
                                   │
                                   ↓
                    append_custom_strikes() → write CSV + plots
-
+```
 
 ## API Choice and Justification
 
