@@ -10,7 +10,7 @@ This tool programmatically investigates both Deribit environments, aligns histor
 
 ## How to Run the Application
 
-1. Clone the repository: `git clone https://github.com/amirraufi/deri8its_assign/Task 2`
+1. Clone the repository: `git clone https://github.com/amirraufi/deri8its_assign
 2. Navigate into the project directory: `cd Task2`
 3. Create and activate a virtual environment:
    - On Unix/macOS: `python3 -m venv .venv && source .venv/bin/activate`
