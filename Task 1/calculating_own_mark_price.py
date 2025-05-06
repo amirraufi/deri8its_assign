@@ -285,11 +285,11 @@ async def main(args) -> None:
              .apply(plain_mid, include_groups=False)
              .rename('plain_mid'))
 
-        vwap3   = (book.groupby('instrument', group_keys=False)
+        vwap   = (book.groupby('instrument', group_keys=False)
                     .apply(vwap_mid, include_groups=False)
-                    .rename('vwap3'))
+                    .rename('vwap'))
 
-        benchmarks = pd.concat([mprice, plain, vwap3], axis=1) 
+        benchmarks = pd.concat([mprice, plain, vwap], axis=1) 
         tick = tick.join(benchmarks, on="instrument")
                
 
@@ -331,12 +331,12 @@ async def main(args) -> None:
         # Snapshot CSV output
         # ------------------------------------------------------------------
         df_out = (tick[['instrument', 'strike',
-                        'plain_mid', 'micro', 'vwap3',
+                        'plain_mid', 'micro', 'vwap',
                         'my_mark_px', 'mark_px', 'is_custom']]
                     .rename(columns={ 'mark_px':   'deribit_mark_px'}))
 
         # --- diff columns ----------------------------------------------------
-        for col in ['plain_mid', 'micro', 'vwap3', 'my_mark_px']:
+        for col in ['plain_mid', 'micro', 'vwap', 'my_mark_px']:
             df_out[f'diff_{col}'] = df_out[col] - df_out['deribit_mark_px']
 
         # numeric diff (NaN if Deribit price missing)
@@ -350,15 +350,15 @@ async def main(args) -> None:
         df_cust = df_out[df_out['is_custom'] ].drop(columns='is_custom').round(4).copy()
         avg_plain = df_std['diff_plain_mid'].mean()
         avg_micro = df_std['diff_micro'].mean()
-        avg_vwap3 = df_std['diff_vwap3'].mean()
-        avg_our   = df_std['diff_our_mark_px'].mean()
+        avg_vwap = df_std['diff_vwap'].mean()
+        avg_our   = df_std['my_mark_px'].mean()
 
         avg_plain_series.append(avg_plain)
         avg_micro_series.append(avg_micro)
-        avg_vwap_series.append(avg_vwap3)
+        avg_vwap_series.append(avg_vwap)
         avg_our_series.append(avg_our) 
         print(f"Snapshot {snap}: "
-              f"plain={avg_plain:.5f} | micro={avg_micro:.5f} | vwap3={avg_vwap3:.5f}| our={avg_our:.5f}")         # store it
+              f"plain={avg_plain:.5f} | micro={avg_micro:.5f} | vwap={avg_vwap:.5f}| our={avg_our:.5f}")         # store it
         csv_std  = SNAP_CSV_DIR / f"snapshot_{snap:03d}_normal.csv"
         csv_cust = SNAP_CSV_DIR / f"snapshot_{snap:03d}_custom.csv"
 
@@ -377,7 +377,7 @@ async def main(args) -> None:
             fig, axs = plt.subplots(2, 2, figsize=(10, 6))
             for ax, data, title in zip(axs.ravel(),
                     [avg_plain_series, avg_micro_series, avg_vwap_series, avg_our_series],
-                    ["plain mid", "micro", "vwap‑3", "our mark"]):
+                    ["plain mid", "micro", "vwap", "our mark"]):
                 ax.plot(data, marker='o')
                 ax.set_title(title); ax.grid(True)
                 ax.set_xlabel("snapshot #"); ax.set_ylabel("diff")
@@ -392,7 +392,7 @@ async def main(args) -> None:
 # -----------------------------------------------------------------------------
 
 def test_custom_logic():
-    """Lightweight unit test for custom‑strike logic."""
+    """Lightweight unit test for custom strike logic."""
     data = [
         {
             'instrument': 'TST-XX-90-C', 'underlying': 'TST', 'strike': 90, 'type': 'C',
