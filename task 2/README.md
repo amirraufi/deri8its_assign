@@ -10,13 +10,31 @@ This tool programmatically investigates both Deribit environments, aligns histor
 
 ## How to Run the Application
 
-1. Clone the repository: `git clone https://github.com/8ehrad/Crypto-Coconut-Pricing.git`
-2. Navigate into the project directory: `cd Crypto-Coconut-Pricing`
+1. Clone the repository: `git clone https://github.com/amirraufi/DERIBIT_ASSIGNMENT_QRisk/Task 2`
+2. Navigate into the project directory: `cd Task2`
 3. Create and activate a virtual environment:
    - On Unix/macOS: `python3 -m venv .venv && source .venv/bin/activate`
    - On Windows: `python -m venv .venv && .venv\Scripts\activate`
 4. Install dependencies: `pip install -r requirements.txt`
 5. Run the application: `python Task2.py`
+
+---
+
+## API Choice and Justification
+
+### API Used: `get_deliveries` – Deribit Public API
+
+This project uses the `get_deliveries` endpoint from Deribit’s public API to retrieve historical **settlement prices** for various instruments. Unlike other endpoints that return live mark or index prices, `get_deliveries` provides **final settlement prices** at expiry, which are authoritative for determining real transaction prices in the context of Deribit derivatives.
+
+**Why this API?**
+
+- **Accuracy:** Since the shop priced coconuts based on *previous-day settlements*, it was important to use the same final values rather than transient mid-market prices.
+- **Historical Depth:** The `get_deliveries` endpoint allows fetching multiple pages of past data, enabling the project to search across a wide date range.
+- **Instrument Coverage:** The API supports multiple currencies and indices (BTC, ETH, SOL, PAXG, XRP, ADA), aligning with the symbols shown on the payment terminal.
+- **Programmatic Access:** Well-documented and consistent structure made it straightforward to automate the retrieval and comparison process.
+
+For full documentation: https://docs.deribit.com/#public-get_deliveries
+
 
 ---
 
