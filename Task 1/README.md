@@ -152,11 +152,14 @@ benchmarks + tick DF → fit_iv_surface() → iv_map, coeffs_map
 * **Level‑2 Depth Availability** – Public API exposes only 10 levels; sufficient for micro/VWAP, but deeper stats (order book slope) were out of scope and it was my first time working with websockets and going from level1 to level2 was also a bit challenging.
 * **Wing Liquidity** – Far ITM/OTM options exhibit wide spreads. Most of the mehodolgies would give a bit of a far price as the spread is big and liquidity is not enough. ✔︎ addressed by λ‑blend gravitating toward theory.  
 * **No Deribit Mark Reliance** – The assignment forbids copying venue marks; we solved IV via the described model and only using bid and ask information and not the mark price or the IV that is based on the mark price.
+
+
 ### Methodology
+
 I searched through all the coins that Deribit offers and found those with options, then retrieved all the strikes for the given expiration. I then obtained their Level 1 and Level 2 data for ask size, bid size, best ask, best bid, etc. Next, I considered the best ways to calculate mid prices and identified three methods: plain mid, VWAP, and micro-price (which has been explained).
 
 First, I tried the basic approach by computing mark prices using each of the three methods (micro price, mid price, etc.).
-Then I calculated implied volatility using Brent’s method, interpolated the smile to find IV for all unlisted options, and used Black–Scholes to obtain their theoretical values.
+Then I calculated implied volatility using Brent’s method, interpolated the smile to find IV for all unlisted options, and used Black–Scholes(r ≈ 0 for crypto and all basic assumptions of Black Scholes). to obtain their theoretical values.
 However, I noticed the wide spread between bid and ask in far out‑of‑the‑money options, so I created a λ function to weight theoretical and market values based on bid–ask spread.
 The resulting blend keeps ATM strikes within a few basis points of venue marks while providing smooth, arbitrage‑free prices for illiquid wings and custom strikes.
 Finally, I added the vol‑smile graph I generated and a chart comparing average differences between my model, VWAP, micro, and midpoint prices.
