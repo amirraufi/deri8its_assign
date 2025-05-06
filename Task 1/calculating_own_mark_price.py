@@ -33,8 +33,8 @@ pd.options.display.float_format = "{:.4f}".format
 SPREAD_IV_MAX = 1.5    # exclude quotes with ask‑IV – bid‑IV > 1.5 vols (~90th‑pctile weekday spread)
 SIZE_MIN      = 5      # require ≥ 5 contracts on both sides—covers 98 % of ATM/weeklies but still filters 1‑lot feelers
 POLY_DEGREE   = 2      # quadratic in ln(K/S): captures skew + basic smile with minimum over‑fit
-LIQ_K         = 10   # λ = depth / (depth + 50·spread) ⇒ 1‑tick/50‑lot book gets 50 % weight on micro‑price
-PLOT_EVERY    = 10     # generate smile plot every ~50 s when t2=5 s, keeps disk usage modest
+LIQ_K         = 100   # λ = depth / (depth + 50·spread) ⇒l 1‑tick/50‑lot book gets 50 % weight on micro‑price
+PLOT_EVERY    = 5     # if it is set to 10 generate smile plot every ~50 s when t2=5 s, keeps disk usage modest
 
 MAX_MONEYNESS = 2.5    # only extend custom strikes to ±250 % of spot; beyond that vols explode and liquidity is zero
 
@@ -254,12 +254,18 @@ async def main(args) -> None:
     avg_vwap_series  = []       #
     avg_our_series   = [] 
     while time.time() < end_time:
-        ...
+        
         await asyncio.sleep(args.t2)
         snap += 1
 
         tick = stream.ticker_df()
         book = stream.book_df()
+        depth_tot = (
+        book          # columns: instrument | side | price | size
+        .groupby("instrument")["size"]
+        .sum()      # bids + asks
+        .rename("depth_tot"))
+        tick = tick.join(depth_tot, on="instrument")
         if tick.empty or book.empty:
             continue
 
@@ -283,7 +289,7 @@ async def main(args) -> None:
                     .apply(vwap_mid, include_groups=False)
                     .rename('vwap3'))
 
-        benchmarks = pd.concat([mprice, plain, vwap3], axis=1)   # index = instrument
+        benchmarks = pd.concat([mprice, plain, vwap3], axis=1) 
         tick = tick.join(benchmarks, on="instrument")
                
 
@@ -299,7 +305,7 @@ async def main(args) -> None:
         def blend_mark(r):
             micro = r.micro
             spread = r.best_ask - r.best_bid
-            depth = r.bid_sz + r.ask_sz
+            depth  = r.depth_tot   
             theo_iv = iv_map.get(r.instrument)
             if theo_iv is None or np.isnan(theo_iv):
                 theo_c = micro

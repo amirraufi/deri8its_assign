@@ -1,0 +1,9 @@
+instrument,strike,plain_mid,micro,vwap3,our_mark_px,deribit_mark_px,diff_plain_mid,diff_micro,diff_vwap3,diff_our_mark_px,diff
+ETH-23MAY25-2600-P,2600.0000,,,,1.0000,doesnt exist,,,,,
+ETH-23MAY25-2600-C,2600.0000,,,,1.0000,doesnt exist,,,,,
+ETH-23MAY25-3000-P,3000.0000,,,,1.0000,doesnt exist,,,,,
+ETH-23MAY25-3000-C,3000.0000,,,,1.0000,doesnt exist,,,,,
+BTC-23MAY25-50000-P,50000.0000,,,,0.5313,doesnt exist,,,,,
+BTC-23MAY25-50000-C,50000.0000,,,,1.0000,doesnt exist,,,,,
+BTC-23MAY25-200000-C,200000.0000,,,,1.0000,doesnt exist,,,,,
+BTC-23MAY25-200000-P,200000.0000,,,,1.0000,doesnt exist,,,,,

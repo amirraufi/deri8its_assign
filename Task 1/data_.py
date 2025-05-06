@@ -83,6 +83,15 @@ class DeribitStream:
                 fut = self.pending.pop(msg["id"])
                 fut.set_result(msg.get("result", msg.get("error")))
                 continue
+            # if msg.get("method") == "heartbeat":
+            #         if msg["params"].get("type") == "test_request":
+            #     # respond immediately – no need to await the result
+            #              await self.ws.send(json.dumps({
+            #         "jsonrpc": "2.0",
+            #         "id":      msg.get("id", 0),   # any int is fine
+            #         "method":  "public/test"
+            #     }))
+            #         continue      
             if msg.get("method") != "subscription":
                 continue
 

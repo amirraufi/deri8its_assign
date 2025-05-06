@@ -1,13 +1,6 @@
-requests==2.32.*
-# Core stack
-pandas==2.2.*
-numpy==1.26.*
-scipy==1.13.*         # Black‑Scholes + IV fit
-matplotlib==3.9.*     # Smile plots
-websockets==12.0      # Deribit WS API
-aiohttp==3.9.*        # REST fail‑overs & async HTTP
-requests==2.32.*      # synchronous REST fallback
-
-# Optional / dev
-pytest==8.*           # unit tests
-ruff==0.4.*           # linter / formatter
+# requirements.txt
+numpy>=1.26          # arrays, math, polyfit input for smile
+pandas>=2.1          # DataFrames, groupby/join, CSV IO
+scipy>=1.10          # brentq solver, stats.norm, interpolate.interp1d
+matplotlib>=3.8      # plotting IV smiles & time‑series charts
+websockets>=12.0     # async WebSocket used by DeribitStream
