@@ -29,21 +29,21 @@ A live dashboard plots the tracking error of this blended mark against three n
 
 ## How to Run the Application
 
-1. Clone the repository: `git clone https://github.com/amirraufi/deri8its_assign.git'
+1. Clone the repository: `git clone https://github.com/amirraufi/deri8its_assign.git`
 2. Navigate into the project directory: `cd deri8its_assign`
-3. Navigate into task 2: 'cd "Task 1"'
+3. Navigate into task 2: `cd "Task 1"`
 5. Create and activate a virtual environment:
    - On Unix/macOS: `python3 -m venv .venv && source .venv/bin/activate`
    - On Windows: `python -m venv .venv && .venv\Scripts\activate`
 6. Install dependencies: `pip install -r requirements.txt`
-7. Run the application: `python3 calculating_own_mark_price.py "Expiry" "run time" "interval times" "strikes" '
+7. Run the application: `python3 calculating_own_mark_price.py "Expiry" "run time" "interval times" "strikes" `
 8. example: python3 calculating_own_mark_price.py 23MAY25 60 5 \
 > >   1500 1600 1700 1800 1900 2000 2100 2200 2400 2600 \
 > >   88000 90000 92000 94000 96000 98000 100000 102000 104000 106000 \
 > >   500 3000 50000 200000
-9. to get the csv files type: 'code snapshot_csv'
-10. to get the vol smiles type: 'code smile_plots'
-11. to see the performance chart of average differences type: 'code avg_diff_grid.png'
+9. to get the csv files type: `code snapshot_csv`
+10. to get the vol smiles type: `code smile_plots`
+11. to see the performance chart of average differences type: `code avg_diff_grid.png`
 
 
 
