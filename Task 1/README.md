@@ -22,6 +22,9 @@ This tool programmatically investigates both Deribit environments, aligns histor
 > >   1500 1600 1700 1800 1900 2000 2100 2200 2400 2600 \
 > >   88000 90000 92000 94000 96000 98000 100000 102000 104000 106000 \
 > >   500 3000 50000 200000
+9. to get the csv files type: 'code snapshot_csvs'
+10. to get the vol smiles type: 'code smile_plots'
+11. to see the performance chart of average differences type: 'avg_diff_grid.png'
 
 
 
