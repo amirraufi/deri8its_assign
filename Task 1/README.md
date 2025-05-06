@@ -50,6 +50,8 @@ A live dashboard plots the tracking error of this blended mark against three n
 ---
 ## 2. Data Flow — helper‑by‑helper
 
+
+
 ```mermaid
 graph TD
     A[WebSocket snapshot<br>(DeribitStream)] -->|every T₂ s| B[tick DF<br>best‑bid/ask + mark]
