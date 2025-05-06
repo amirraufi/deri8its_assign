@@ -43,7 +43,7 @@ A live dashboard plots the tracking error of this blended mark against three n
 > >   500 3000 50000 200000
 9. to get the csv files type: 'code snapshot_csvs'
 10. to get the vol smiles type: 'code smile_plots'
-11. to see the performance chart of average differences type: 'avg_diff_grid.png'
+11. to see the performance chart of average differences type: 'code avg_diff_grid.png'
 
 
 
