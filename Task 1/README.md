@@ -1,4 +1,4 @@
-# coconut-price-detection
+# Task 1 Finding mark prices
 
 ## Determine the mark price for every listed strike on Deribit (given a single expiry) and synthesise fair marks for non‑existent strikes.
 
