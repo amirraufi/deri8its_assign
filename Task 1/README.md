@@ -165,8 +165,17 @@ The resulting blend keeps ATM strikes within a few basis points of venue marks w
 Finally, I added the vol‑smile graph I generated and a chart comparing average differences between my model, VWAP, micro, and midpoint prices.
 
 
+## Output
 
----
+Running the script produces three kinds of artefacts for every session:
+
+CSV snapshots (one file per snapshot)
+<snapshot_n>_normal.csv – prices for strikes that actually exist on Deribit.
+<snapshot_n>_custom.csv – prices for user‑supplied strikes (no Deribit quote, so no direct comparison).
+Volatility‑smile PNGs
+A fitted IV smile for each underlying, saved every N snapshots (default 10).
+Performance dashboard
+avg_diff_grid.png – a 2 × 2 grid comparing the mean price difference (our mark – Deribit mark) across snapshots for all four strategies: plain‑mid, micro‑price, VWAP‑, and our blended mark.
 
 
 ---
