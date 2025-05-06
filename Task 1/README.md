@@ -51,34 +51,30 @@ A live dashboard plots the tracking error of this blended mark against three n
 ## 2. Data Flow — helper‑by‑helper
 
 
-
 ```mermaid
 graph TD
-    A[WebSocket snapshot<br>(DeribitStream)] -->|every T₂ s| B[tick DF<br>best‑bid/ask + mark]
-    A --> C[book DF<br>L1 depth]
+    A["WebSocket snapshot<br/>DeribitStream"]
+      -->|every T₂ s| B["tick DF<br/>best‑bid/ask + mark"]
+    A --> C["book DF<br/>L1 depth"]
 
-    C --> D1[micro_price()]
-    C --> D2[plain_mid()]
-    C --> D3[vwap_mid()]
+    C --> D1["micro_price()"]
+    C --> D2["plain_mid()"]
+    C --> D3["vwap_mid()"]
 
-    D1 --> E[benchmarks DF]
+    D1 --> E[benchmarks]
     D2 --> E
     D3 --> E
 
-    B --> F[tick.join(benchmarks)]
+    B --> F["tick ⨝ benchmarks"]
     E --> F
 
-    F --> G[fit_iv_surface()<br>→ iv_map, coeffs_map]
-
-    F --> H[blend_mark(row)]
+    F --> G["fit_iv_surface()  →  iv_map, coeffs_map"]
+    F --> H["blend_mark()  →  my_mark_px"]
     G --> H
 
-    H --> I[my_mark_px]
+    H --> I["append_custom_strikes()"]
+    I --> J["CSV + plots"]
 
-    I --> J[append_custom_strikes()<br>→ is_custom=True rows]
-    G --> J
-
-    J --> K[CSV snapshots<br>& plots]
 
 
 ## API Choice and Justification
