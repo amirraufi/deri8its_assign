@@ -80,7 +80,7 @@ benchmarks + tick DF → fit_iv_surface() → iv_map, coeffs_map
 
 **Why this API?**
 
-## Why the Deribit Public API? (also required by assinment:-))
+Why the Deribit Public API? (also required by assignment:-))
 
 | What we need for the model | How Deribit’s API delivers |
 |----------------------------|----------------------------|
@@ -95,9 +95,9 @@ benchmarks + tick DF → fit_iv_surface() → iv_map, coeffs_map
 
 ---
 
-## Logic & Design Decisions  
+## Logic & Design Decisions  
 
-### Summary  
+### Summary  
 
 1. **Snapshot Engine**  
    * A dedicated `asyncio` loop wakes every **T₂ seconds** (default 5 s) and assembles two dataframes:  
@@ -105,9 +105,17 @@ benchmarks + tick DF → fit_iv_surface() → iv_map, coeffs_map
      * **`book`** – top‑10 order‑book lines used for micro‑price, plain‑mid and VWAP‑mid benchmarks.  
 
 2. **Micro‑price Estimator**  
-   \[
-   \text{micro}=\frac{P_{\text{ask}}Q_{\text{bid}}+P_{\text{bid}}Q_{\text{ask}}}{Q_{\text{bid}}+Q_{\text{ask}}}
-   \]  
+ 
+<p align="center">
+  <img
+    src="https://latex.codecogs.com/svg.latex?
+      \displaystyle\mu
+      =\frac{P_{\text{ask}}\,Q_{\text{bid}}
+            +P_{\text{bid}}\,Q_{\text{ask}}}
+           {Q_{\text{bid}}+Q_{\text{ask}}}"
+    alt="Micro-price estimator" />
+</p>
+
    This tilts the mid‑price toward the heavier side of the book and reacts instantly to imbalance.
 
 3. **Fitted IV Surface**  
