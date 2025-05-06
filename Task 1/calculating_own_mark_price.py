@@ -263,7 +263,7 @@ async def main(args) -> None:
         depth_tot = (
         book          # columns: instrument | side | price | size
         .groupby("instrument")["size"]
-        .sum()      # bids + asks
+        .sum()      
         .rename("depth_tot"))
         tick = tick.join(depth_tot, on="instrument")
         if tick.empty or book.empty:
@@ -333,15 +333,14 @@ async def main(args) -> None:
         df_out = (tick[['instrument', 'strike',
                         'plain_mid', 'micro', 'vwap3',
                         'my_mark_px', 'mark_px', 'is_custom']]
-                    .rename(columns={'my_mark_px': 'our_mark_px',
-                                     'mark_px':   'deribit_mark_px'}))
+                    .rename(columns={ 'mark_px':   'deribit_mark_px'}))
 
         # --- diff columns ----------------------------------------------------
-        for col in ['plain_mid', 'micro', 'vwap3', 'our_mark_px']:
+        for col in ['plain_mid', 'micro', 'vwap3', 'my_mark_px']:
             df_out[f'diff_{col}'] = df_out[col] - df_out['deribit_mark_px']
 
         # numeric diff (NaN if Deribit price missing)
-        df_out['diff'] = df_out['our_mark_px'] - df_out['deribit_mark_px']
+        df_out['diff'] = df_out['my_mark_px'] - df_out['deribit_mark_px']
 
         # label rows with missing Deribit (doesn't exist)
         df_out['deribit_mark_px'] = df_out['deribit_mark_px'].fillna('doesnt exist')
