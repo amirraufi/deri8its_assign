@@ -48,59 +48,35 @@ A live dashboard plots the tracking error of this blended mark against three n
 
 
 ---
-2. Data Flow
+## 2. Data Flow — helper‑by‑helper
 
-Below is the end-to-end pipeline, referencing the helper functions in calculating_own_mark_price.py:
+```mermaid
+graph TD
+    A[WebSocket snapshot<br>(DeribitStream)] -->|every T₂ s| B[tick DF<br>best‑bid/ask + mark]
+    A --> C[book DF<br>L1 depth]
 
-WebSocket Snapshot
-Every T₂ seconds we pull two tables from DeribitStream:
-tick: best-bid/ask from Deribit + Deribit’s mark price
-book: full L1 depth (price & size on both sides)
-Parse Instruments
-parse_instr()  →  (underlying, strike, type)
-Compute Reference Prices
-micro_price()  →  imbalance-weighted mid
-plain_mid()    →  simple (bid + ask)/2
-vwap_mid()     →  VWAP over top 3 levels
-Group book by instrument, apply each function → three series: micro, plain_mid, vwap3.
-Join Benchmarks
-benchmarks = concat([micro, plain_mid, vwap3], axis=1)
-tick = tick.join(benchmarks, on="instrument")
-Fit IV Surface
-fit_iv_surface(df_tick)
-Filters only “liquid” quotes:
-• ask_iv > 0, bid_iv > 0
-• iv_spread = ask_iv – bid_iv ≤ SPREAD_IV_MAX
-• ask_sz, bid_sz ≥ SIZE_MIN
-Fits a quadratic in ln(K/S) weighted by 1/iv_spread².
-Outputs
-iv_map: per‐instrument smoothed IV
-coeffs_map: per‐underlying smile coefficients
-Compute Theoretical Price
-black_price(S, K, T, σ, is_call)
-– Undiscounted Black–Scholes in coin terms
-– theoretical_coin_price = black_price(...) / S
-Blend Market & Theory
-liquidity_weight(spread, depth)
-blend_mark(row)  →  my_mark_px
-depth = bid_sz + ask_sz
-spread = best_ask – best_bid
-Append Custom Strikes
-append_custom_strikes(tick, coeffs_map, custom_strikes)
-For each K*, finds nearest S, enforces K*/S ≤ MAX_MONEYNESS
-Evaluates smile polynomial at ln(K*/S), clips IV to observed max
-Computes BS price → coin → flagged is_custom=True
-Output Artifacts
-CSV snapshots
-snapshot_csv/snapshot_XXX_normal.csv  
-snapshot_csv/snapshot_XXX_custom.csv
-Volatility smiles
-smile_plots/{UNDERLYING}_snapXXX.png
-Performance chart
-avg_diff_grid.png
-Compares average differences (mean(our_mark_px – Deribit_mark_px))
-for plain_mid, micro_price, vwap3, and our blended mark.
-This workflow ensures that our mark prices gracefully transition from pure market data to theory as liquidity conditions warrant, while providing clear visual and tabular outputs for validation and comparison.
+    C --> D1[micro_price()]
+    C --> D2[plain_mid()]
+    C --> D3[vwap_mid()]
+
+    D1 --> E[benchmarks DF]
+    D2 --> E
+    D3 --> E
+
+    B --> F[tick.join(benchmarks)]
+    E --> F
+
+    F --> G[fit_iv_surface()<br>→ iv_map, coeffs_map]
+
+    F --> H[blend_mark(row)]
+    G --> H
+
+    H --> I[my_mark_px]
+
+    I --> J[append_custom_strikes()<br>→ is_custom=True rows]
+    G --> J
+
+    J --> K[CSV snapshots<br>& plots]
 
 
 ## API Choice and Justification
