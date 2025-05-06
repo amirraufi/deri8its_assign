@@ -1,10 +1,29 @@
 # coconut-price-detection
 
-## Determine the Historical USD Price of a King Coconut Using Cryptocurrency Clues
+## Determine the mark price for every listed strike on Deribit (given a single expiry) and synthesise fair marks for non‑existent strikes.
 
-This project is a Python-based solution to determine the historical USD price of a king coconut from a photo of a payment terminal. The shop in question accepted multiple cryptocurrencies, and the price was based on the **previous day's Deribit settlement prices**. However, the **exact date** and **whether the prices came from testnet or mainnet** were unknown.
+We generate a fair mark‑price for every option by taking the best of two worlds and letting the data tell us how much weight to give each one:
 
-This tool programmatically investigates both Deribit environments, aligns historical cryptocurrency ratios with known coconut pricing ratios, and identifies possible historical dates on which the price could have been calculated.
+Micro‑price (market signal)
+A size‑weighted mid‑price that leans toward the heavier side of the order book — the quickest read of where traders really want to deal.
+Theoretical price (model signal)
+A no‑arbitrage Black‑Scholes value using an implied‑volatility surface we fit to the liquid quotes (tight spreads, decent size).
+The surface is quadratic in ln(K/S); simple, smooth and robust.
+We blend them with a liquidity switch
+
+<p align="center">
+  <strong>mark</strong> = &lambda;<sub>liq</sub> &middot; micro  
+  &nbsp;&nbsp;+ (1 − &lambda;<sub>liq</sub>) &middot; theory  
+  <br>
+  &lambda;<sub>liq</sub> = depth / (depth + L<sub>k</sub> &middot; spread)
+</p>
+
+ 
+If the book is deep & tight → λ ≈ 1 → follow the market.
+If the quote is thin or wide (far OTM wings) → λ → 0 → fall back to theory.
+Because the IV surface is continuous, we can price any user‑requested strike on the fly and keep the sheet arbitrage‑free.
+
+A live dashboard plots the tracking error of this blended mark against three quick‑and‑dirty yardsticks (plain mid, micro, VWAP‑3). Our mark is not always the closest to Deribit’s official mark, but that was never the brief; the goal was to demonstrate a defensible, tunable methodology. By sliding L_k you can instantly pivot from “pure market” to “pure model” without touching the rest of the code.
 
 ---
 
@@ -29,12 +48,70 @@ This tool programmatically investigates both Deribit environments, aligns histor
 
 
 ---
+2. Data flow
+
+Real‑time feed – WebSocket subscription to all instruments for the chosen expiry.
+Snapshot every T2 seconds – build two DataFrames:
+tick (best quotes, Deribit mark)
+book (full depth used to compute micro‑price).
+Micro‑price – size‑weighted mid of the top L1 quotes
+(P_ask*Q_bid +P_bid*Q_ask)/(Q_bid + Q_ask)
+
+
+​	
+ 
+​	
+ 
+– captures order‑book imbalance.
+Fit IV surface – for each underlying, polynomial in 
+log
+⁡
+(
+K
+/
+S
+)
+log(K/S) using only “liquid” quotes (tight spread, ≥ SIZE_MIN on both sides).
+Theoretical coin price – Black–Scholes (undiscounted) with that IV.
+Liquidity blend –
+mark
+=
+λ
+ 
+micro
++
+(
+1
+−
+λ
+)
+ 
+theoretical
+mark=λmicro+(1−λ)theoretical
+with
+λ
+=
+depth
+depth
++
+L
+k
+⋅
+spread
+λ= 
+depth+L 
+k
+​	
+ ⋅spread
+depth
+​	
+ 
+→ flows to theory when depth is thin / spread wide.
+Custom strikes – same IV surface + Black–Scholes, flagged is_custom=True.
 
 ## API Choice and Justification
 
-### API Used: `get_deliveries` – Deribit Public API
 
-This project uses the `get_deliveries` endpoint from Deribit’s public API to retrieve historical **settlement prices** for various instruments. Unlike other endpoints that return live mark or index prices, `get_deliveries` provides **final settlement prices** at expiry, which are authoritative for determining real transaction prices in the context of Deribit derivatives.
 
 **Why this API?**
 
@@ -77,28 +154,13 @@ For full documentation: https://docs.deribit.com/#public-get_deliveries
 
 ## Key Challenges
 
-- **Unknown Environment (Testnet or Mainnet):** I tackled this by analysing both environments in parallel and reporting the results independently or together if they matched.
-- **Unknown Date:** By analysing 1000 past settlement prices per index, I ensured a reasonable temporal range without overwhelming the API.
-- **API Constraints:** Deribit limits each delivery price request to a maximum of 100 records. Fetching 1000 records required batching 10 requests per index, multiplied across 6 indices. High concurrency caused errors, which were mitigated using semaphore-based throttling.
-- **Floating-Point Precision Errors:** Ratios derived from the terminal image are subject to small inaccuracies. A tolerance of `0.001` was chosen empirically to allow slight drift while still avoiding false positives.
+Finding the level 2 data to find the size of the asks and bids for the vwap model, where as it was a challenge for me to get that data from the API. The differences in the prices of all the models was very good and close and inline with deribits for close to money strike prices but for further very ITM or very OTM it was a bit far from deribits mark price. As the requirement of the assignment I have not used the mark prices of deribit and had to come up with challenges regarding ways to make the vol smile and how to come up with my own mark prices. However, first I have used mid prices and came up with mark prices and used brent solver to get IV of the options byt then I realised as the theory is more important I came up with a blend solution that will fix the problem of the tails that have very wide bid and ask with a more theoretical rich approach were it is dynamic and you can change the weight allocated to the standard mid price and the builded IV model
 
 ---
 
-## Final output
-
-- Date: 2024-11-11 (the photo would have been taken the day after this date)
-- ETH/USD Rate: 3141.284
-- Coconut Price (0.0013371 ETH): $4.200211
 
 ---
 
-## Files in This Repo
-
-| File               | Description                          |
-|--------------------|--------------------------------------|
-| `Task2.py`         | Main Python script                   |
-| `requirements.txt` | Dependency list                      |
-| `README.md`        | This documentation                   |
 
 ---
 
