@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import re
 import asyncio
 import math
 import time
@@ -47,6 +47,58 @@ SNAP_CSV_DIR.mkdir(exist_ok=True)
 
 OUTDIR = Path("smile_plots")
 OUTDIR.mkdir(exist_ok=True)
+
+
+#  helper validators
+# ──────────────────────────────────────────────────────────────────────────────
+_expiry_pat = re.compile(r"^\d{2}[A-Z]{3}\d{2}$")   # e.g. 23MAY25
+
+def expiry_code(s: str) -> str:
+    """Validate Deribit expiry code (e.g. 23MAY25)."""
+    if not _expiry_pat.fullmatch(s.upper()):
+        raise argparse.ArgumentTypeError(
+            f"'{s}' is not a valid expiry code (expect NNMMMNN like 23MAY25)")
+    return s.upper()
+
+def positive_int(s: str) -> int:
+    """Validate that runtime/interval are positive integers."""
+    try:
+        v = int(s)
+        if v <= 0:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{s}' must be a positive integer")
+    return v
+
+def strike_price(s: str) -> float:
+    """Validate that custom strikes are > 0."""
+    try:
+        k = float(s)
+        if k <= 0:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{s}' must be a positive number")
+    return k
+
+
+#  argument parser using the validators
+# ──────────────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Own mark price calculator with custom IV surface")
+    parser.add_argument("expiry", type=expiry_code,
+                        help="Expiry code, e.g. 23MAY25")
+    parser.add_argument("t1", type=positive_int,
+                        help="Total runtime seconds (T1)")
+    parser.add_argument("t2", type=positive_int,
+                        help="Interval between snapshots (T2)")
+    parser.add_argument("custom_strikes", type=strike_price, nargs="*",
+                        help="Optional additional strike prices")
+    parser.add_argument("--test", action="store_true",
+                        help="Run simple unit test instead of live stream")
+
+    # parse & validate immediately
+    args = parser.parse_args()
 
 
 # Helper functions
