@@ -106,15 +106,7 @@ Why the Deribit Public API? (also required by assignment:-))
 
 2. **Micro‑price Estimator**  
  
-<p align="center">
-  <img
-    src="https://latex.codecogs.com/svg.latex?
-      \displaystyle\mu
-      =\frac{P_{\text{ask}}\,Q_{\text{bid}}
-            +P_{\text{bid}}\,Q_{\text{ask}}}
-           {Q_{\text{bid}}+Q_{\text{ask}}}"
-    alt="Micro-price estimator" />
-</p>
+![White micro-price estimator](https://latex.codecogs.com/svg.image?\color{white}\displaystyle\mu=\frac{P_{\text{ask}}Q_{\text{bid}}+P_{\text{bid}}Q_{\text{ask}}}{Q_{\text{bid}}+Q_{\text{ask}}})
 
    This tilts the mid‑price toward the heavier side of the book and reacts instantly to imbalance.
 
@@ -124,10 +116,12 @@ Why the Deribit Public API? (also required by assignment:-))
    * Use the polynomial to generate a continuous IV map for every live strike.
 
 4. **Liquidity Blend**  
-   \[
-   \text{mark}= \lambda \;\text{micro}+(1-\lambda)\;\text{theory},\quad
-   \lambda=\frac{\text{depth}}{\text{depth}+{ \small LIQ\_K}\times\text{spread}}
-   \]  
+ <p align="center">
+  <strong>mark</strong> = &lambda;<sub>liq</sub> &middot; micro  
+  &nbsp;&nbsp;+ (1 − &lambda;<sub>liq</sub>) &middot; theory  
+  <br>
+  &lambda;<sub>liq</sub> = depth / (depth + L<sub>k</sub> &middot; spread)
+</p>
 
    * **Depth** = contracts visible on L1 (bid + ask).  
    * **`LIQ_K`** controls how fast we fade to theory when markets are wide / thin (set via grid‑search).  
@@ -155,7 +149,7 @@ Why the Deribit Public API? (also required by assignment:-))
 
 ---
 
-### Key Challenges & Mitigations  
+### Key Challenges & Mitigations  
 
 * **Level‑2 Depth Availability** – Public API exposes only 10 levels; sufficient for micro/VWAP, but deeper stats (order book slope) were out of scope and it was my first time working with websockets and going from level1 to level2 was also a bit challenging.
 * **Wing Liquidity** – Far ITM/OTM options exhibit wide spreads. Most of the mehodolgies would give a bit of a far price as the spread is big and liquidity is not enough. ✔︎ addressed by λ‑blend gravitating toward theory.  
