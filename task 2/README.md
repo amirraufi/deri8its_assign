@@ -20,6 +20,24 @@ This tool programmatically investigates both Deribit environments, aligns histor
 
 ---
 
+## API Choice and Justification
+
+### API Used: `get_deliveries` – Deribit Public API
+
+This project uses the `get_deliveries` endpoint from Deribit’s public API to retrieve historical **settlement prices** for various instruments. Unlike other endpoints that return live mark or index prices, `get_deliveries` provides **final settlement prices** at expiry, which are authoritative for determining real transaction prices in the context of Deribit derivatives.
+
+**Why this API?**
+
+- **Accuracy:** Since the shop priced coconuts based on *previous-day settlements*, it was important to use the same final values rather than transient mid-market prices.
+- **Historical Depth:** The `get_deliveries` endpoint allows fetching multiple pages of past data, enabling the project to search across a wide date range.
+- **Instrument Coverage:** The API supports multiple currencies and indices (BTC, ETH, SOL, PAXG, XRP, ADA), aligning with the symbols shown on the payment terminal.
+- **Programmatic Access:** Well-documented and consistent structure made it straightforward to automate the retrieval and comparison process.
+
+For full documentation: https://docs.deribit.com/#public-get_deliveries
+
+
+---
+
 ## Logic and Design Decisions
 
 ### Summary
@@ -80,3 +98,4 @@ This tool programmatically investigates both Deribit environments, aligns histor
 - Polars Python API: https://pola-rs.github.io/polars/py-polars/html/reference/index.html
 - Asyncio – Python Docs: https://docs.python.org/3/library/asyncio.html
 - WebSockets for Python: https://websockets.readthedocs.io/
+
