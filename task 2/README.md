@@ -12,11 +12,12 @@ This tool programmatically investigates both Deribit environments, aligns histor
 
 1. Clone the repository: `git clone https://github.com/amirraufi/deri8its_assign.git'
 2. Navigate into the project directory: `cd deri8its_assign`
-3. Create and activate a virtual environment:
+3. Navigate into task 2: 'cd "task 2"'
+4. Create and activate a virtual environment:
    - On Unix/macOS: `python3 -m venv .venv && source .venv/bin/activate`
    - On Windows: `python -m venv .venv && .venv\Scripts\activate`
-4. Install dependencies: `pip install -r requirements.txt`
-5. Run the application: `python Task2.py`
+5. Install dependencies: `pip install -r requirements.txt`
+6. Run the application: `python Task2.py`
 
 ---
 
