@@ -99,6 +99,11 @@ if __name__ == "__main__":
 
     # parse & validate immediately
     args = parser.parse_args()
+    if args.t1 < args.t2:
+        parser.error(
+            f"Total runtime (t1={args.t1}) must be at least as large as "
+            f"snapshot interval (t2={args.t2})"
+        )
 
 
 # Helper functions
