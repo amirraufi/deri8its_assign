@@ -33,8 +33,8 @@ A live dashboard plots the tracking error of this blended mark against three n
 2. Navigate into the project directory: `cd deri8its_assign`
 3. Navigate into task 2: 'cd "Task 1"'
 5. Create and activate a virtual environment:
-   - On Unix/macOS: `python3 -m venv .venv source .venv/bin/activate `
-   - On Windows: `python -m venv .venv\Scripts\activate`
+   - On Unix/macOS: `python3 -m venv .venv && source .venv/bin/activate`
+   - On Windows: `python -m venv .venv && .venv\Scripts\activate`
 6. Install dependencies: `pip install -r requirements.txt`
 7. Run the application: `python3 calculating_own_mark_price.py "Expiry" "run time" "interval times" "strikes" '
 8. example: python3 calculating_own_mark_price.py 23MAY25 60 5 \
