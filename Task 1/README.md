@@ -109,12 +109,17 @@ This workflow ensures that our mark prices gracefully transition from pure marke
 
 **Why this API?**
 
-- **Accuracy:** Since the shop priced coconuts based on *previous-day settlements*, it was important to use the same final values rather than transient mid-market prices.
-- **Historical Depth:** The `get_deliveries` endpoint allows fetching multiple pages of past data, enabling the project to search across a wide date range.
-- **Instrument Coverage:** The API supports multiple currencies and indices (BTC, ETH, SOL, PAXG, XRP, ADA), aligning with the symbols shown on the payment terminal.
-- **Programmatic Access:** Well-documented and consistent structure made it straightforward to automate the retrieval and comparison process.
+## Why the Deribit Public API? (also required by assinment:-))
 
-For full documentation: https://docs.deribit.com/#public-get_deliveries
+| What we need for the model | How Deribit’s API delivers |
+|----------------------------|----------------------------|
+| **Real‑time, low‑latency quotes**<br>to build 5‑second snapshots of every option in a given expiry. | `public/subscribe` WebSocket channels stream order‑book updates in ≈ 100–200 ms. No REST polling, no throttling issues. |
+| **Level‑2 depth (contracts on bid / ask)**<br>to compute the liquidity term<br>`depth = bid_size + ask_size` used in the λ‑blend. | `book.<instrument>.10` channels expose the top‑10 levels (price, size). |
+| **Venue mark & surface**<br>so we can benchmark our blended marks and show the “diff” plots. | `public/get_book_summary_by_instrument` returns **mark_price**, **bid_iv**, **ask_iv** for every option. |
+| **Historical context**<br>for hyper‑parameter scans (e.g. finding an optimal `LIQ_K`). | `public/get_last_trades_by_instrument` (tick history) and `public/get_tradingview_chart_data` (OHLC) let us replay past sessions quickly. |
+| **Breadth of instruments**<br>(BTC, ETH, SOL, etc.) exactly as requested in the assignment. | Deribit lists the deepest, most liquid crypto‑option markets under one uniform API. |
+| **Clean JSON + open access**<br>for rapid prototyping in plain Python. | Well‑documented endpoints, predictable field names and generous public rate‑limits (≈ 20 req/s REST; unlimited on WebSocket). |
+
 
 
 ---
