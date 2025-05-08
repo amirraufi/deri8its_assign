@@ -13,7 +13,7 @@ result visualisation.
   - `avg_diff_grid.png` — model-vs-Deribit comparison chart  
   - `README.md` — detailed methodology & usage instructions  
 
-- **Task 2: Coconut-Pricing Puzzle (Optional)**  
+- **Task 2: Coconut-Pricing Puzzle**  
   - `coconut_price.py` — web-scraping & ratio computation  
   - `README.md` — concise explanation of approach  
 
