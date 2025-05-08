@@ -17,7 +17,7 @@ result visualisation.
   - `coconut_price.py` — web-scraping & ratio computation  
   - `README.md` — concise explanation of approach  
 
-- **Top-Level Files**  
+- **Top-Level Files.**  
   - `README.md` — this overview  
   - `requirements.txt` — project dependencies (async-websocket, pandas, numpy, …)  
 
